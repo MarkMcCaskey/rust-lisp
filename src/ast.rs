@@ -110,15 +110,14 @@ pub enum Abbreviation {
 }
 
 #[derive(Debug)]
-pub struct Vector(Vec<Datum>);
+pub struct Vector(pub Vec<Datum>);
 
 #[derive(Debug, PartialEq)]
-pub struct Number(Complex);
+pub struct Number(pub Complex);
 
 #[derive(Debug, PartialEq)]
 pub enum Complex {
     Real(Real),
-    RealAtReal(Real, Real),
     RealPlusImag(Real, Imag),
     RealSubImag(Real, Imag),
     Imag(Imag),
