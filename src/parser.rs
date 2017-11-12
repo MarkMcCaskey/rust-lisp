@@ -8,10 +8,55 @@ use std::str::FromStr;
 
 use nom::*;
 
+named!(identifier<Identifier>,
+       do_parse!(i: initial >>
+                 s: many0!(subsequent) >>
+                 (s.iter().fold(str::from_utf8(i).unwrap().to_owned(),
+                                |a, b| a + str::from_utf8(b).unwrap()))));
+
+named!(initial<&[u8]>,
+       alt!(//alphanumeric |
+            tag!(".") |
+            tag!("+") |
+            tag!("-") |
+            tag!("!") |
+            tag!("$") |
+            tag!("%") |
+            tag!("&") |
+            tag!("*") |
+            tag!("/") |
+            tag!(":") |
+            tag!("<") |
+            tag!("=") |
+            tag!(">") |
+            tag!("?") |
+            tag!("~") |
+            tag!("_") |
+            tag!("^") |
+            tag!("@")));
+
+named!(subsequent<&[u8]>,
+       alt!(initial | tag!("#")));
+
 named!(datum<Datum>, alt!(
     do_parse!(b: boolean >> (Datum::Bool(b))) |
-    do_parse!(c: complex >> (Datum::Num(c))) 
+    do_parse!(c: complex >> (Datum::Num(c))) |
+    do_parse!(c: lisp_character >> (Datum::Char(c)))
     ));
+
+named!(lisp_character<char>,
+       do_parse!(tag!("#\\") >>
+                 v: alt!(anychar |
+                         lisp_named_character) >>
+                 (v)));
+
+// TODO: finish this
+named!(lisp_named_character<char>,
+       alt!(value!('\n', tag!("newline")) | 
+            value!(' ', tag!("space")) |
+            value!('\0', tag!("nul")) |
+            value!('\t', tag!("tab"))
+       ));
 
 named!(boolean<bool>, alt!(
     do_parse!(tag!("true") >> (true)) |
