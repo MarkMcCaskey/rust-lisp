@@ -3,13 +3,13 @@ use types::*;
 #[derive(Debug)]
 pub struct Program(Vec<Form>);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Form {
     Def(Definition),
     Expr(Expression),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Definition {
     Variable(VariableDefinition),
     //Syntax(SyntaxDefinition),
@@ -19,7 +19,7 @@ pub enum Definition {
     //Derived(DerivedDefinition),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum VariableDefinition {
     Define(Variable, Expression),
     DefineMulti(Many1<Variable>, Body),
@@ -28,7 +28,7 @@ pub enum VariableDefinition {
 
 pub type Variable = Identifier;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Body(Vec<Definition>, Many1<Expression>);
 
 /*#[derive(Debug)]
@@ -37,12 +37,13 @@ pub struct SyntaxDefinition(Keyword, TransformerExpression);*/
 pub type Keyword = Identifier;
 
 //SyntaxBinding does not match formal Scheme grammar
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SyntaxBinding(Keyword, Expression);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Expression {
     Const(Constant),
+    Variable(Variable),
     QuotedDatum(Datum),
     Lambda(Formals, Body),
     IfElse {
@@ -61,7 +62,7 @@ pub enum Expression {
     Derived(DerivedExpression),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Constant {
     Bool(bool),
     Num(Number),
@@ -69,19 +70,19 @@ pub enum Constant {
     Str(String),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Formals {
     Var(Variable),
     ManyVar(Vec<Variable>),
     DottedManyVar(Many1<Variable>, Variable),
 }
 
-#[derive(Debug)]
-pub struct Application(Expression, Vec<Expression>);
+#[derive(Debug, Clone)]
+pub struct Application(pub Expression, pub Vec<Expression>);
 
 pub type Identifier = String;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Datum {
     Bool(bool),
     Num(Complex),
@@ -94,14 +95,14 @@ pub enum Datum {
 
 pub type Symbol = Identifier;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum List {
     List(Vec<Datum>),
     Dotted(Many1<Datum>, Box<Datum>),
     Abbrev(Box<Abbreviation>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Abbreviation {
     Quote(Datum),
     BackTick(Datum),
@@ -109,13 +110,13 @@ pub enum Abbreviation {
     Splice(Datum),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Vector(pub Vec<Datum>);
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Number(pub Complex);
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Complex {
     Real(Real),
     RealPlusImag(Real, Imag),
@@ -123,13 +124,13 @@ pub enum Complex {
     Imag(Imag),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Imag(pub Real);
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Real(pub Num);
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Num {
     Float(f64),
     SInt(i64),
@@ -138,7 +139,7 @@ pub enum Num {
 }
 
 //TODO: fill these out
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum DerivedExpression {
     And(Vec<Expression>),
     Or(Vec<Expression>),

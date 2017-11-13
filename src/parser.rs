@@ -8,6 +8,60 @@ use std::str::FromStr;
 
 use nom::*;
 
+named!(pub form<Form>,
+       alt!(do_parse!(d: definition >> (Form::Def(d))) |
+            do_parse!(e: expression >> (Form::Expr(e)))));
+
+named!(definition<Definition>,
+       alt!(do_parse!(v: variable_definition >>
+                      (Definition::Variable(v)))));
+
+named!(variable_definition<VariableDefinition>,
+       alt!(do_parse!(tag!("(") >>
+                      opt!(multispace) >>
+                      tag!("define") >>
+                      opt!(multispace) >>
+                      v: variable >>
+                      opt!(multispace) >>
+                      e: expression >>
+                      opt!(multispace) >>
+                      tag!(")") >>
+                      (VariableDefinition::Define(v, e)))
+       ));
+
+named!(application<Application>,
+       do_parse!(tag!("(") >>
+                 opt!(multispace) >>
+                 e: expression >>
+                 opt!(multispace) >>
+                 v: many0!(do_parse!(
+                     se: expression >>
+                         opt!(multispace) >>
+                         (se))) >>
+                 opt!(multispace) >>
+                 tag!(")") >>
+                 (Application(e, v))));
+
+// TODO: quote (I don't like it being in the parser)
+named!(pub expression<Expression>,
+       alt_complete!(
+           do_parse!(c: constant >> (Expression::Const(c))) | 
+           do_parse!(v: variable >> (Expression::Variable(v))) |
+           do_parse!(tag!("'") >> d: datum >>
+                     (Expression::QuotedDatum(d))) |
+           do_parse!(a: application >> (Expression::App(Box::new(a)))) 
+       ));
+
+named!(variable<Variable>,
+       do_parse!(v: identifier >> (v)));
+
+//TODO: finish
+named!(constant<Constant>,
+       alt!(do_parse!(b: boolean >> (Constant::Bool(b))) |
+            do_parse!(n: number >> (Constant::Num(n))) |
+            do_parse!(c: lisp_character >> (Constant::Char(c)))));
+            
+
 named!(identifier<Identifier>,
        do_parse!(i: initial >>
                  s: many0!(subsequent) >>
@@ -15,7 +69,7 @@ named!(identifier<Identifier>,
                                 |a, b| a + str::from_utf8(b).unwrap()))));
 
 named!(initial<&[u8]>,
-       alt!(//alphanumeric |
+       alt!(alphanumeric |
             tag!(".") |
             tag!("+") |
             tag!("-") |
@@ -38,10 +92,12 @@ named!(initial<&[u8]>,
 named!(subsequent<&[u8]>,
        alt!(initial | tag!("#")));
 
-named!(datum<Datum>, alt!(
+named!(datum<Datum>, alt_complete!(
     do_parse!(b: boolean >> (Datum::Bool(b))) |
-    do_parse!(c: complex >> (Datum::Num(c))) |
-    do_parse!(c: lisp_character >> (Datum::Char(c)))
+    do_parse!(tag!("#:") >>
+              i: identifier >> (Datum::Sym(i))) |
+    do_parse!(c: lisp_character >> (Datum::Char(c))) |
+    do_parse!(c: complex >> (Datum::Num(c))) 
     ));
 
 named!(lisp_character<char>,
@@ -101,8 +157,8 @@ named!(num<Num>,
                    (Num::Ratio(n1, n2))
            ) |
            do_parse!(n: parse_int >> (Num::UInt(n)))  |
-           do_parse!(n: parse_sint >> (Num::SInt(n)))  |
-           do_parse!(n: be_f64 >> (Num::Float(n))) 
+           do_parse!(n: parse_sint >> (Num::SInt(n))) // |
+           //do_parse!(n: be_f64 >> (Num::Float(n))) 
        ));
 
 named!(parse_int<u64>, 
